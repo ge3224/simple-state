@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple State Examples</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+        line-height: 1.6;
+      }
+      h1 {
+        color: #333;
+      }
+      .example {
+        margin: 20px 0;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: #f9f9f9;
+      }
+      button {
+        padding: 8px 16px;
+        margin: 4px;
+        cursor: pointer;
+        border: none;
+        border-radius: 4px;
+        background: #007bff;
+        color: white;
+        font-size: 14px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      .output {
+        margin-top: 12px;
+        padding: 12px;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: monospace;
+        min-height: 40px;
+      }
+      .tabs {
+        display: flex;
+        gap: 8px;
+        border-bottom: 2px solid #ddd;
+        margin-bottom: 20px;
+      }
+      .tab {
+        padding: 10px 20px;
+        cursor: pointer;
+        background: none;
+        border: none;
+        border-bottom: 3px solid transparent;
+        font-size: 16px;
+        color: #666;
+      }
+      .tab:hover {
+        background: #f0f0f0;
+      }
+      .tab.active {
+        color: #007bff;
+        border-bottom-color: #007bff;
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+      input[type="text"] {
+        padding: 8px;
+        width: 300px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      .recipe-output {
+        margin-top: 12px;
+        padding: 12px;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 13px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .recipe-output pre {
+        margin: 4px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Simple State Examples</h1>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="basic">Basic Examples</button>
+      <button class="tab" data-tab="computed">Computed Values</button>
+      <button class="tab" data-tab="actions">Actions</button>
+      <button class="tab" data-tab="maps">Maps</button>
+    </div>
+
+    <!-- Basic Examples Tab -->
+    <div id="basic" class="tab-content active">
+      <div class="example">
+        <h2>Counter Example</h2>
+        <button id="increment">Increment</button>
+        <button id="decrement">Decrement</button>
+        <button id="reset">Reset</button>
+        <div class="output" id="counter-output">Count: 0</div>
+      </div>
+
+      <div class="example">
+        <h2>Todo List Example</h2>
+        <input type="text" id="todo-input" placeholder="Enter a todo..." />
+        <button id="add-todo">Add Todo</button>
+        <div class="output" id="todo-output">No todos yet</div>
+      </div>
+    </div>
+
+    <!-- Computed Values Tab -->
+    <div id="computed" class="tab-content">
+      <div class="example">
+        <h2>Computed Full Name</h2>
+        <p>Automatically compute full name from first and last name:</p>
+        <input type="text" id="first-name" placeholder="First name" value="John" />
+        <input type="text" id="last-name" placeholder="Last name" value="Doe" />
+        <div class="output" id="full-name-output"></div>
+      </div>
+
+      <div class="example">
+        <h2>Shopping Cart Total</h2>
+        <p>Computed subtotal and total with tax:</p>
+        <button id="add-item">Add Item ($10)</button>
+        <button id="remove-item">Remove Item</button>
+        <label>Tax Rate: <input type="number" id="tax-rate" value="8" min="0" max="100" style="width: 60px;" />%</label>
+        <div class="recipe-output" id="cart-output"></div>
+      </div>
+    </div>
+
+    <!-- Actions Tab -->
+    <div id="actions" class="tab-content">
+      <div class="example">
+        <h2>Counter with History</h2>
+        <p>Actions encapsulate state updates with undo support:</p>
+        <button id="action-increment">Increment</button>
+        <button id="action-decrement">Decrement</button>
+        <button id="action-increment-by-5">+5</button>
+        <button id="action-undo">Undo</button>
+        <button id="action-reset">Reset</button>
+        <div class="recipe-output" id="action-counter-output"></div>
+      </div>
+
+      <div class="example">
+        <h2>Async Data Fetching</h2>
+        <p>Actions for loading, success, and error states:</p>
+        <button id="fetch-user">Fetch User</button>
+        <button id="fetch-error">Simulate Error</button>
+        <button id="reset-data">Reset</button>
+        <div class="recipe-output" id="async-output"></div>
+      </div>
+    </div>
+
+    <!-- Maps Tab -->
+    <div id="maps" class="tab-content">
+      <div class="example">
+        <h2>User Status Map</h2>
+        <p>Managing a collection of users with individual updates:</p>
+        <button id="add-user">Add Random User</button>
+        <button id="toggle-user">Toggle First User Status</button>
+        <button id="remove-user">Remove Last User</button>
+        <div class="recipe-output" id="user-map-output"></div>
+      </div>
+
+      <div class="example">
+        <h2>Normalized Store</h2>
+        <p>Separate collections that reference each other:</p>
+        <button id="add-post">Add Post</button>
+        <div class="recipe-output" id="normalized-output"></div>
+      </div>
+    </div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
