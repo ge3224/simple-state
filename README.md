@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Branch Protection](https://img.shields.io/badge/branch%20protection-enabled-green.svg)](https://github.com/ge3224/simple-state/settings/branches)
 
-State management doesn't have to live in node_modules. Simple State is ~150 lines of type-safe, reactive storage with immutability protection, built to be vendored in your project—zero dependencies, framework-agnostic, and small enough to actually audit.
+State management doesn't have to live in node_modules. Simple State is ~150 lines of type-safe, reactive storage with immutability protection, built to be vendored in your project—zero dependencies, framework-agnostic, and audit-friendly.
 
 Built for projects where vanilla TypeScript makes sense and stability beats ecosystem churn.
 
