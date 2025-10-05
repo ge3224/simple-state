@@ -142,6 +142,7 @@ Removes a subscriber using the subscription ID.
 The library is intentionally minimal, but you can build advanced patterns on top of it. Check out the [examples/recipes](examples/recipes) directory for:
 
 - **[Memory Management](examples/recipes/memory-management.ts)** - Prevent memory leaks with proper cleanup
+- **[DevTools](examples/recipes/devtools.ts)** - Debugging patterns and logger middleware
 - **[Computed Values](examples/recipes/computed-values.ts)** - Automatically derive state from other state
 - **[Memoization](examples/recipes/memoization.ts)** - Cache expensive calculations
 - **[Batching](examples/recipes/batching.ts)** - Debouncing, throttling, and transaction patterns
