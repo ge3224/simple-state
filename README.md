@@ -7,11 +7,11 @@
 
 State management doesn't have to live in node_modules. This is ~125 lines of code for type-safe, reactive storage with immutability protection. Framework-agnostic, dependency-free, and designed to be vendored.
 
-The framework isn't essential. State management is. Building for when vanilla TypeScript makes sense and stability beats ecosystem churn.
+Built for projects where vanilla TypeScript makes sense and stability beats ecosystem churn.
 
 ## Features
 
-- **Type-safe**: Runtime type validation beyond TypeScript's compile-time checks
+- **Type-safe**: Compile-time type checking with runtime validation guards
 - **Zero dependencies**: No supply chain risk, no transitive dependencies
 - **Reactive**: Subscribe to state changes with callbacks
 - **Immutable**: Deep cloning of mutable data types to prevent external mutations
