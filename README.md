@@ -5,9 +5,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Branch Protection](https://img.shields.io/badge/branch%20protection-enabled-green.svg)](https://github.com/ge3224/simple-state/settings/branches)
 
-State management shouldn't live in node_modules. This is ~125 lines of type-safe, reactive storage with immutability protection. Framework-agnostic, dependency-free, and designed to be vendored.
+State management doesn't have to live in node_modules. This is ~125 lines of code for type-safe, reactive storage with immutability protection. Framework-agnostic, dependency-free, and designed to be vendored.
 
-The framework isn't essential. State management is. Building for developers stepping back from React/Next.js—where vanilla TypeScript makes sense again and stability beats ecosystem churn.
+The framework isn't essential. State management is. Building for when vanilla TypeScript makes sense and stability beats ecosystem churn.
 
 ## Features
 
