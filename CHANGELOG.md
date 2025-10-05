@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2025-10-05
+
+### Added
+- DevTools recipe with 8 debugging patterns (logger, performance monitor, Redux DevTools integration, etc.)
+- Persistence recipe with 8 storage patterns (localStorage, sessionStorage, IndexedDB, encryption, cross-tab sync, etc.)
+- Undo/Redo recipe with 6 history patterns (basic undo/redo, transactions, selective undo, time travel)
+- Selector-based subscription pattern in defensive-subscribers recipe (subscribe to specific values with memoization)
+- Type-safe `derive()` helper in computed-values recipe (full TypeScript inference for 1-5 dependencies)
+
+### Fixed
+- Added circular reference handling tests to verify `structuredClone` behavior
+
 ## [0.1.0] - 2025-10-05
 
 ### Added
