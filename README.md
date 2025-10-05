@@ -149,6 +149,8 @@ The library is intentionally minimal, but you can build advanced patterns on top
 - **[Maps](examples/recipes/maps.ts)** - Managing collections of related state
 - **[Actions](examples/recipes/actions.ts)** - Encapsulate state updates in named functions
 - **[Defensive Subscribers](examples/recipes/defensive-subscribers.ts)** - Handle missing data safely
+- **[Persistence](examples/recipes/persistence.ts)** - localStorage, sessionStorage, IndexedDB, and encryption patterns
+- **[Undo/Redo](examples/recipes/undo-redo.ts)** - History, time-travel, and command patterns
 
 These patterns demonstrate how to extend the core library for more complex use cases while maintaining the zero-dependency philosophy.
 
