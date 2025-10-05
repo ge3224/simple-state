@@ -251,6 +251,45 @@ describe("get", () => {
       "WeakSets cannot be cloned with structuredClone"
     );
   });
+
+  it("should handle circular references in objects", () => {
+    interface CircularObj {
+      name: string;
+      self?: CircularObj;
+    }
+
+    const obj: CircularObj = { name: "circular" };
+    obj.self = obj; // Create circular reference
+
+    const state = newSimpleState(obj);
+
+    // structuredClone handles circular references correctly
+    const result = state.get();
+    assert.equal(result.name, "circular");
+    assert.equal(result.self?.name, "circular");
+    assert.equal(result.self, result, "Circular reference should be preserved");
+
+    // Mutations to the cloned object should not affect internal state
+    result.name = "mutated";
+    assert.equal(state.get().name, "circular", "Internal state should be unchanged");
+  });
+
+  it("should handle circular references in arrays", () => {
+    const arr: any[] = [1, 2, 3];
+    arr.push(arr); // Create circular reference
+
+    const state = newSimpleState(arr);
+
+    // structuredClone handles circular references correctly
+    const result = state.get();
+    assert.equal(result.length, 4);
+    assert.equal(result[0], 1);
+    assert.equal(result[3], result, "Circular reference should be preserved");
+
+    // Mutations should not affect internal state
+    result[0] = 999;
+    assert.equal(state.get()[0], 1, "Internal state should be unchanged");
+  });
 });
 
 describe("clone option", () => {
