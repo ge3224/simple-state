@@ -25,6 +25,42 @@ function computed<T>(
   return result;
 }
 
+// Type-safe derive helper with better inference
+function derive<A, R>(
+  deps: [SimpleState<A>],
+  computeFn: (a: A) => R
+): SimpleState<R>;
+function derive<A, B, R>(
+  deps: [SimpleState<A>, SimpleState<B>],
+  computeFn: (a: A, b: B) => R
+): SimpleState<R>;
+function derive<A, B, C, R>(
+  deps: [SimpleState<A>, SimpleState<B>, SimpleState<C>],
+  computeFn: (a: A, b: B, c: C) => R
+): SimpleState<R>;
+function derive<A, B, C, D, R>(
+  deps: [SimpleState<A>, SimpleState<B>, SimpleState<C>, SimpleState<D>],
+  computeFn: (a: A, b: B, c: C, d: D) => R
+): SimpleState<R>;
+function derive<A, B, C, D, E, R>(
+  deps: [SimpleState<A>, SimpleState<B>, SimpleState<C>, SimpleState<D>, SimpleState<E>],
+  computeFn: (a: A, b: B, c: C, d: D, e: E) => R
+): SimpleState<R>;
+function derive(
+  deps: Array<SimpleState<any>>,
+  computeFn: (...values: any[]) => any
+): SimpleState<any> {
+  const result = newSimpleState(computeFn(...deps.map(d => d.get())));
+
+  deps.forEach(dep => {
+    dep.subscribe(() => {
+      result.set(computeFn(...deps.map(d => d.get())));
+    });
+  });
+
+  return result;
+}
+
 // Example 1: Full name from first and last name
 console.log("=== Example 1: Full Name ===");
 const firstName = newSimpleState("John");
@@ -100,3 +136,44 @@ filteredItems.subscribe(filtered => {
 
 filterCategory.set("vegetable");
 filterCategory.set(null);  // Show all
+
+// Example 4: Type-safe derive with better inference
+console.log("\n=== Example 4: Type-safe Derive ===");
+
+const price = newSimpleState(100);
+const quantity = newSimpleState(5);
+const discount = newSimpleState(0.1);
+
+// derive() provides full type inference - no need to specify types!
+const finalPrice = derive(
+  [price, quantity, discount],
+  (p, q, d) => p * q * (1 - d) // p, q, d are all correctly inferred!
+);
+
+// TypeScript knows finalPrice is SimpleState<number>
+finalPrice.subscribe(value => {
+  console.log(`Final price: $${value.toFixed(2)}`);
+});
+
+price.set(120);
+
+// Complex example with mixed types
+const userName = newSimpleState("Alice");
+const userAge = newSimpleState(30);
+const isAdmin = newSimpleState(true);
+
+// All types automatically inferred
+const userSummary = derive(
+  [userName, userAge, isAdmin],
+  (name, age, admin) => ({
+    displayName: `${name} (${age})`,
+    role: admin ? "Admin" : "User",
+    canEdit: admin && age >= 18
+  })
+);
+
+userSummary.subscribe(summary => {
+  console.log(`User: ${summary.displayName}, Role: ${summary.role}, Can Edit: ${summary.canEdit}`);
+});
+
+isAdmin.set(false);

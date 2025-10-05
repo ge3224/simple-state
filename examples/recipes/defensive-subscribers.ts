@@ -287,6 +287,67 @@ Subscribers are notified in the order they were added (insertion order).
 This is guaranteed because subscriptions use a Map internally.
 `);
 
+// Example 9: Selector-based Subscription Pattern
+console.log("\n=== Example 9: Selector-based Subscription ===");
+
+// Helper to subscribe with a selector - only notifies when selected value changes
+function subscribeWithSelector<T, S>(
+  state: SimpleState<T>,
+  selector: (value: T) => S,
+  callback: (selected: S) => void
+): number {
+  let previousSelected: S | undefined;
+
+  return state.subscribe((value) => {
+    const selected = selector(value);
+
+    // Only notify if selected value changed
+    if (selected !== previousSelected) {
+      previousSelected = selected;
+      callback(selected);
+    }
+  });
+}
+
+interface UserProfile {
+  id: number;
+  profile?: {
+    name: string;
+    email: string;
+  };
+  lastLogin?: Date;
+}
+
+const userProfile = newSimpleState<UserProfile>({
+  id: 1,
+  profile: { name: "Alice", email: "alice@example.com" },
+  lastLogin: new Date()
+});
+
+// Subscribe only to email changes
+subscribeWithSelector(
+  userProfile,
+  (user) => user.profile?.email, // Selector with defensive check
+  (email) => {
+    console.log("Email changed:", email ?? "No email");
+  }
+);
+
+userProfile.set({
+  ...userProfile.get(),
+  lastLogin: new Date()
+}); // Won't notify (email unchanged)
+
+userProfile.set({
+  ...userProfile.get(),
+  profile: { name: "Alice", email: "alice@newdomain.com" }
+}); // Will notify
+
+userProfile.set({
+  ...userProfile.get(),
+  profile: undefined
+}); // Will notify (email changed to undefined)
+
 // Summary
 console.log("\n=== Best Practices ===");
 console.log(`
@@ -298,4 +359,5 @@ console.log(`
 6. Prefer explicit undefined checks over assumptions
 7. Always create new object references when updating
 8. Subscribers execute in insertion order (guaranteed)
+9. Use selector pattern to subscribe only to specific values
 `);
