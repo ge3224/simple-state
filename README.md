@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Branch Protection](https://img.shields.io/badge/branch%20protection-enabled-green.svg)](https://github.com/ge3224/simple-state/settings/branches)
 
-State management doesn't have to live in node_modules. This is ~125 lines of code for type-safe, reactive storage with immutability protection. Framework-agnostic, dependency-free, and designed to be vendored.
+State management doesn't have to live in node_modules. Simple State is ~150 lines of type-safe, reactive storage with immutability protection, built to be vendored in your project—zero dependencies, framework-agnostic, and small enough to actually audit.
 
 Built for projects where vanilla TypeScript makes sense and stability beats ecosystem churn.
 
@@ -18,8 +18,6 @@ Built for projects where vanilla TypeScript makes sense and stability beats ecos
 - **Audit-friendly**: Small enough to actually read and understand
 
 ## Installation
-
-(I use this as a git submodule in my projects.)
 
 ### Git Submodule
 
@@ -38,7 +36,7 @@ cd simple-state && git checkout v0.1.0
 
 ### Direct Copy
 
-Copy `src/index.ts` into your project. (~125 lines, zero dependencies)
+Copy `src/index.ts` into your project.
 
 ```typescript
 import { newSimpleState } from './simple-state';
@@ -129,6 +127,8 @@ Returns the current state value. For mutable types (objects, arrays, Maps, Sets,
 
 Updates the state with a new value and notifies all subscribers asynchronously (via microtask). Uses reference equality (`===`) to skip notifications when the same value is set again.
 
+**Note:** For objects/arrays, always create a new reference when updating (e.g., `{ ...obj, field: newValue }`). Setting the same reference twice will not trigger notifications.
+
 #### `subscribe(callback: (value: T) => void): number`
 
 Registers a callback to be called when the state changes. Returns a subscription ID.
@@ -141,13 +141,25 @@ Removes a subscriber using the subscription ID.
 
 The library is intentionally minimal, but you can build advanced patterns on top of it. Check out the [examples/recipes](examples/recipes) directory for:
 
+- **[Memory Management](examples/recipes/memory-management.ts)** - Prevent memory leaks with proper cleanup
 - **[Computed Values](examples/recipes/computed-values.ts)** - Automatically derive state from other state
 - **[Memoization](examples/recipes/memoization.ts)** - Cache expensive calculations
 - **[Batching](examples/recipes/batching.ts)** - Debouncing, throttling, and transaction patterns
 - **[Maps](examples/recipes/maps.ts)** - Managing collections of related state
 - **[Actions](examples/recipes/actions.ts)** - Encapsulate state updates in named functions
+- **[Defensive Subscribers](examples/recipes/defensive-subscribers.ts)** - Handle missing data safely
 
 These patterns demonstrate how to extend the core library for more complex use cases while maintaining the zero-dependency philosophy.
+
+### Performance Considerations
+
+By default, Simple State clones mutable data to prevent mutations. For large datasets (1000+ items), you can disable cloning:
+
+```typescript
+const state = newSimpleState(largeArray, { clone: false });
+```
+
+**⚠️ Warning:** You must follow immutable update patterns when cloning is disabled. See benchmarks with `pnpm bench` for performance comparisons.
 
 Run the interactive examples in your browser:
 ```bash
@@ -213,18 +225,10 @@ pnpm type-check
 
 # Run interactive examples
 pnpm dev
+
+# Run benchmarks
+pnpm bench
 ```
-
-## Philosophy
-
-Simple State is built on a few core principles:
-
-1. **Auditability over features** - You should be able to read and understand every line of code you depend on
-2. **Stability over novelty** - Code that works today should work in 5 years without maintenance
-3. **Simplicity over convenience** - Complexity is technical debt, even if it's someone else's library
-4. **Ownership over convenience** - Copy the source and make it yours rather than depending on external packages
-
-This library will never have dependencies. It will never add features that sacrifice simplicity. It will never break your project with upstream changes.
 
 ## License
 

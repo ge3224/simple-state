@@ -1,7 +1,7 @@
 {
   "name": "@simple-state/core",
   "version": "0.1.0",
-  "description": "A lightweight, type-safe state management library for TypeScript. ~100 lines of code, zero dependencies, focused on reactive data storage.",
+  "description": "State management for TypeScript. Type-safe, reactive storage with immutability protection—~150 lines, zero dependencies, built to be vendored and small enough to actually audit.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -16,6 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "bench": "vitest bench",
     "build": "vite build",
     "type-check": "tsc --noEmit",
     "prepublishOnly": "pnpm test && pnpm build"

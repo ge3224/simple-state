@@ -253,6 +253,132 @@ describe("get", () => {
   });
 });
 
+describe("clone option", () => {
+  it("should clone by default", () => {
+    const obj = { count: 0 };
+    const state = newSimpleState(obj);
+    const retrieved = state.get();
+
+    // Mutate the retrieved object
+    retrieved.count = 999;
+
+    // Internal state should be unchanged
+    assert.equal(state.get().count, 0, "Default cloning should protect internal state");
+  });
+
+  it("should clone when explicitly enabled", () => {
+    const obj = { count: 0 };
+    const state = newSimpleState(obj, { clone: true });
+    const retrieved = state.get();
+
+    // Mutate the retrieved object
+    retrieved.count = 999;
+
+    // Internal state should be unchanged
+    assert.equal(state.get().count, 0, "Explicit cloning should protect internal state");
+  });
+
+  it("should NOT clone when disabled", () => {
+    const obj = { count: 0 };
+    const state = newSimpleState(obj, { clone: false });
+    const retrieved = state.get();
+
+    // Mutate the retrieved object
+    retrieved.count = 999;
+
+    // Internal state WILL be affected (no cloning)
+    assert.equal(state.get().count, 999, "Disabling clone should return direct reference");
+  });
+
+  it("should NOT clone arrays when disabled", () => {
+    const arr = [1, 2, 3];
+    const state = newSimpleState(arr, { clone: false });
+    const retrieved = state.get();
+
+    // Mutate the retrieved array
+    retrieved.push(4);
+
+    // Internal state WILL be affected
+    assert.equal(state.get().length, 4, "Disabling clone should return direct reference for arrays");
+  });
+
+  it("should still return primitives directly regardless of clone option", () => {
+    const state1 = newSimpleState(42, { clone: false });
+    const state2 = newSimpleState(42, { clone: true });
+
+    assert.equal(state1.get(), 42);
+    assert.equal(state2.get(), 42);
+  });
+
+  it("should NOT clone subscriber notifications when disabled", async () => {
+    const obj = { count: 0 };
+    const state = newSimpleState(obj, { clone: false });
+    let receivedValue: { count: number } | null = null;
+
+    state.subscribe((value) => {
+      receivedValue = value;
+    });
+
+    state.set({ count: 1 });
+    await new Promise(resolve => queueMicrotask(resolve));
+
+    // Mutate the received value
+    receivedValue!.count = 999;
+
+    // Internal state should be affected (no cloning)
+    assert.equal(state.get().count, 999, "Subscribers should receive direct reference when clone is disabled");
+  });
+
+  it("should clone subscriber notifications by default", async () => {
+    const obj = { count: 0 };
+    const state = newSimpleState(obj);
+    let receivedValue: { count: number } | null = null;
+
+    state.subscribe((value) => {
+      receivedValue = value;
+    });
+
+    state.set({ count: 1 });
+    await new Promise(resolve => queueMicrotask(resolve));
+
+    // Mutate the received value
+    receivedValue!.count = 999;
+
+    // Internal state should be unchanged
+    assert.equal(state.get().count, 1, "Subscribers should receive cloned value by default");
+  });
+
+  it("should warn when cloning is disabled for mutable types", () => {
+    const warnSpy = vi.spyOn(console, "warn");
+
+    newSimpleState({ count: 0 }, { clone: false });
+
+    assert.isTrue(
+      warnSpy.mock.calls.some(call =>
+        call[0].includes("Cloning is disabled")
+      ),
+      "Should warn when cloning is disabled for objects"
+    );
+
+    warnSpy.mockRestore();
+  });
+
+  it("should NOT warn when cloning is disabled for primitives", () => {
+    const warnSpy = vi.spyOn(console, "warn");
+
+    newSimpleState(42, { clone: false });
+
+    assert.isFalse(
+      warnSpy.mock.calls.some(call =>
+        call[0].includes("Cloning is disabled")
+      ),
+      "Should not warn when cloning is disabled for primitives"
+    );
+
+    warnSpy.mockRestore();
+  });
+});
+
 describe("set", () => {
   it("should store and retrieve a number", () => {
     const initial = 42;

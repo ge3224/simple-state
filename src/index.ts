@@ -5,20 +5,49 @@ export interface SimpleState<T> {
   unsubscribe(id: number): void;
 }
 
-export function newSimpleState<T>(initial: T): SimpleState<T> {
+export interface SimpleStateOptions {
+  /**
+   * Whether to deep clone mutable state when getting or notifying subscribers.
+   *
+   * Default: true (recommended for safety)
+   *
+   * Set to false for performance-critical scenarios where you can guarantee
+   * that state won't be mutated externally.
+   */
+  clone?: boolean;
+
+  /**
+   * Suppress console warnings.
+   *
+   * Default: false
+   *
+   * Set to true to disable warnings (useful for benchmarks/tests).
+   */
+  suppressWarnings?: boolean;
+}
+
+export function newSimpleState<T>(initial: T, options?: SimpleStateOptions): SimpleState<T> {
   const _type = typeof initial;
   const _mutableType = isMutable(initial) ? getMutableDataType(initial) : undefined;
+  const _shouldClone = options?.clone ?? true;
+  const _suppressWarnings = options?.suppressWarnings ?? false;
 
-  if (_type === "function") {
+  if (_type === "function" && !_suppressWarnings) {
     console.warn(
       'Warning: Functions cannot be cloned. Mutations to captured variables (closures) will affect the stored state. Consider storing data instead of functions.'
+    );
+  }
+
+  if (!_shouldClone && isMutable(initial) && !_suppressWarnings) {
+    console.warn(
+      'Warning: Cloning is disabled. Mutations to the state object will affect the stored state. Ensure you do not mutate state externally.'
     );
   }
 
   let _state = initial;
 
   function share(): T {
-    if (!isMutable(_state)) return _state;
+    if (!_shouldClone || !isMutable(_state)) return _state;
     if (_type === "function") return _state;
 
     try {
@@ -35,6 +64,7 @@ export function newSimpleState<T>(initial: T): SimpleState<T> {
   let _dispatchScheduled = false;
 
   function dispatch() {
+    // Subscribers are notified in insertion order (Map iteration order is guaranteed)
     _subscribers.forEach(function notifySubscriber(callback) {
       callback(share());
     });
