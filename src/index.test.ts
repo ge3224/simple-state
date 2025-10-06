@@ -759,3 +759,118 @@ describe("unsubscribe", () => {
     );
   });
 });
+
+describe("equals option", () => {
+  it("should use reference equality by default", async () => {
+    const state = newSimpleState({ count: 0 });
+    const callback = vi.fn();
+    state.subscribe(callback);
+
+    // Different object, same values - should notify
+    state.set({ count: 0 });
+    await new Promise(resolve => queueMicrotask(resolve));
+    assert.equal(callback.mock.calls.length, 1, "Should notify with different reference");
+
+    // Same reference - should not notify
+    // Note: we need to store the actual internal reference, not a clone from get()
+    const obj = { count: 1 };
+    state.set(obj);
+    await new Promise(resolve => queueMicrotask(resolve));
+    assert.equal(callback.mock.calls.length, 2, "Should notify first time");
+
+    state.set(obj); // Setting the exact same object reference
+    await new Promise(resolve => queueMicrotask(resolve));
+    assert.equal(callback.mock.calls.length, 2, "Should not notify with same reference");
+  });
+
+  it("should always notify when equals is false", async () => {
+    const state = newSimpleState(5, { equals: false });
+    const callback = vi.fn();
+    state.subscribe(callback);
+
+    // Same value - should still notify
+    state.set(5);
+    await new Promise(resolve => queueMicrotask(resolve));
+    assert.equal(callback.mock.calls.length, 1, "Should notify even with same value");
+
+    state.set(5);
+    await new Promise(resolve => queueMicrotask(resolve));
+    assert.equal(callback.mock.calls.length, 2, "Should notify again with same value");
+  });
+
+  it("should use custom equality function for primitives", async () => {
+    const state = newSimpleState(10, {
+      equals: (prev, next) => prev === next
+    });
+    const callback = vi.fn();
+    state.subscribe(callback);
+
+    // Same value - should not notify
+    state.set(10);
+    await new Promise(resolve => queueMicrotask(resolve));
+    assert.equal(callback.mock.calls.length, 0, "Should not notify with equal value");
+
+    // Different value - should notify
+    state.set(20);
+    await new Promise(resolve => queueMicrotask(resolve));
+    assert.equal(callback.mock.calls.length, 1, "Should notify with different value");
+  });
+
+  it("should use custom equality function for objects (deep equality)", async () => {
+    const deepEqual = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
+
+    const state = newSimpleState({ x: 1, y: 2 }, { equals: deepEqual });
+    const callback = vi.fn();
+    state.subscribe(callback);
+
+    // Different reference, same content - should not notify
+    state.set({ x: 1, y: 2 });
+    await new Promise(resolve => queueMicrotask(resolve));
+    assert.equal(callback.mock.calls.length, 0, "Should not notify with deep-equal object");
+
+    // Different content - should notify
+    state.set({ x: 1, y: 3 });
+    await new Promise(resolve => queueMicrotask(resolve));
+    assert.equal(callback.mock.calls.length, 1, "Should notify with different content");
+  });
+
+  it("should work with arrays using custom equality", async () => {
+    const arrayEqual = (a: number[], b: number[]) =>
+      a.length === b.length && a.every((val, idx) => val === b[idx]);
+
+    const state = newSimpleState([1, 2, 3], { equals: arrayEqual });
+    const callback = vi.fn();
+    state.subscribe(callback);
+
+    // Different reference, same content - should not notify
+    state.set([1, 2, 3]);
+    await new Promise(resolve => queueMicrotask(resolve));
+    assert.equal(callback.mock.calls.length, 0, "Should not notify with equal array");
+
+    // Different content - should notify
+    state.set([1, 2, 4]);
+    await new Promise(resolve => queueMicrotask(resolve));
+    assert.equal(callback.mock.calls.length, 1, "Should notify with different array");
+  });
+
+  it("should combine equals with clone option", async () => {
+    const deepEqual = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
+
+    const state = newSimpleState(
+      { value: 100 },
+      { equals: deepEqual, clone: false }
+    );
+    const callback = vi.fn();
+    state.subscribe(callback);
+
+    // Same content, different reference - should not notify
+    state.set({ value: 100 });
+    await new Promise(resolve => queueMicrotask(resolve));
+    assert.equal(callback.mock.calls.length, 0, "Should not notify with deep-equal object");
+
+    // Different content - should notify
+    state.set({ value: 200 });
+    await new Promise(resolve => queueMicrotask(resolve));
+    assert.equal(callback.mock.calls.length, 1, "Should notify with different content");
+  });
+});

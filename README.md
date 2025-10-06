@@ -109,11 +109,39 @@ const objState = newSimpleState({ key: 'value' });
 objState.set([1, 2, 3]); // ✗ Error: Incompatible mutable data type
 ```
 
+### Custom Equality
+
+Control when subscribers are notified with custom equality checks:
+
+```typescript
+// Deep equality - only notify when content actually changes
+const deepEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+const settings = newSimpleState(
+  { theme: 'dark', fontSize: 14 },
+  { equals: deepEqual }
+);
+
+settings.set({ theme: 'dark', fontSize: 14 }); // No notification (deep equal)
+settings.set({ theme: 'light', fontSize: 14 }); // Notifies subscribers
+
+// Always notify, even with same value
+const counter = newSimpleState(0, { equals: false });
+counter.set(0); // Notifies even though value is the same
+```
+
 ## API
 
-### `newSimpleState<T>(initial: T): SimpleState<T>`
+### `newSimpleState<T>(initial: T, options?: SimpleStateOptions<T>): SimpleState<T>`
 
-Creates a new state instance with an initial value.
+Creates a new state instance with an initial value and optional configuration.
+
+**Options:**
+- `clone?: boolean` - Whether to deep clone mutable data (default: `true`)
+- `equals?: false | ((prev: T, next: T) => boolean)` - Custom equality check (default: reference equality)
+  - Set to `false` to always notify subscribers
+  - Provide a function for custom comparison (e.g., deep equality)
+- `suppressWarnings?: boolean` - Suppress console warnings (default: `false`)
 
 ### `SimpleState<T>`
 

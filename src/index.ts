@@ -5,7 +5,7 @@ export interface SimpleState<T> {
   unsubscribe(id: number): void;
 }
 
-export interface SimpleStateOptions {
+export interface SimpleStateOptions<T = any> {
   /**
    * Whether to deep clone mutable state when getting or notifying subscribers.
    *
@@ -24,13 +24,24 @@ export interface SimpleStateOptions {
    * Set to true to disable warnings (useful for benchmarks/tests).
    */
   suppressWarnings?: boolean;
+
+  /**
+   * Custom equality function to determine if a value has changed.
+   *
+   * Default: reference equality (===)
+   *
+   * Set to false to always notify subscribers, or provide a function
+   * for custom comparison logic (e.g., deep equality).
+   */
+  equals?: false | ((prev: T, next: T) => boolean);
 }
 
-export function newSimpleState<T>(initial: T, options?: SimpleStateOptions): SimpleState<T> {
+export function newSimpleState<T>(initial: T, options?: SimpleStateOptions<T>): SimpleState<T> {
   const _type = typeof initial;
   const _mutableType = isMutable(initial) ? getMutableDataType(initial) : undefined;
   const _shouldClone = options?.clone ?? true;
   const _suppressWarnings = options?.suppressWarnings ?? false;
+  const _equals = options?.equals;
 
   if (_type === "function" && !_suppressWarnings) {
     console.warn(
@@ -100,7 +111,14 @@ export function newSimpleState<T>(initial: T, options?: SimpleStateOptions): Sim
         }
       }
 
-      if (_state !== input) {
+      // Determine if value has changed based on equals option
+      const hasChanged = _equals === false
+        ? true // Always notify if equals is false
+        : _equals
+          ? !_equals(_state, input) // Use custom equality function
+          : _state !== input; // Default reference equality
+
+      if (hasChanged) {
         _state = input;
         scheduleDispatch();
       }
