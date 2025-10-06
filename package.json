@@ -1,6 +1,6 @@
 {
   "name": "@simple-state/core",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "State management for TypeScript. Type-safe, reactive storage with immutability protection—~150 lines, zero dependencies, built to be vendored and audit-friendly.",
   "type": "module",
   "main": "./dist/index.js",

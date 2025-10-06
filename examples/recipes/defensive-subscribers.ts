@@ -348,6 +348,70 @@ userProfile.set({
   profile: undefined
 }); // Will notify (email changed to undefined)
 
+// Example 10: Error Boundary Pattern
+console.log("\n=== Example 10: Error Boundary ===");
+
+// Helper to catch errors in subscribers
+function subscribeWithErrorBoundary<T>(
+  state: SimpleState<T>,
+  callback: (value: T) => void,
+  onError: (error: unknown, value: T) => void
+): number {
+  return state.subscribe((value) => {
+    try {
+      callback(value);
+    } catch (error) {
+      onError(error, value);
+    }
+  });
+}
+
+interface ApiResponse {
+  data?: {
+    users?: Array<{ id: number; name: string }>;
+  };
+}
+
+const apiResponse = newSimpleState<ApiResponse>({
+  data: {
+    users: [{ id: 1, name: "Alice" }]
+  }
+});
+
+// Subscriber that might throw
+subscribeWithErrorBoundary(
+  apiResponse,
+  (response) => {
+    // This might crash if structure is unexpected
+    const firstUser = response.data!.users![0];
+    console.log("First user:", firstUser.name);
+  },
+  (error, value) => {
+    console.error("Subscriber error:", error instanceof Error ? error.message : String(error));
+    console.log("Failed to process:", value);
+    // Could log to error tracking service, show user notification, etc.
+  }
+);
+
+// Works fine
+apiResponse.set({
+  data: {
+    users: [{ id: 2, name: "Bob" }]
+  }
+});
+
+// Causes error, but doesn't crash the app
+apiResponse.set({
+  data: {} // Missing users array
+});
+
+// App continues working
+apiResponse.set({
+  data: {
+    users: [{ id: 3, name: "Charlie" }]
+  }
+});
+
 // Summary
 console.log("\n=== Best Practices ===");
 console.log(`
@@ -360,4 +424,5 @@ console.log(`
 7. Always create new object references when updating
 8. Subscribers execute in insertion order (guaranteed)
 9. Use selector pattern to subscribe only to specific values
+10. Use error boundaries to prevent subscriber crashes
 `);

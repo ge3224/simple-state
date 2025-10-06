@@ -5,13 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.2] - 2025-10-05
 
 ### Added
 - `equals` option for custom equality comparison (inspired by SolidJS signals)
   - Set to `false` to always notify subscribers
   - Provide a function for custom comparison (e.g., deep equality)
   - Enables fine-grained control over when subscribers are notified
+- Optimistic Updates recipe with 6 patterns (instant UI feedback, rollback on error, debouncing, retry logic)
+- Error boundary pattern in defensive-subscribers recipe (catch and handle subscriber errors gracefully)
 
 ## [0.1.1] - 2025-10-05
 
