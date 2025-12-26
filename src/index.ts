@@ -5,87 +5,75 @@ export interface SimpleState<T> {
   unsubscribe(id: number): void;
 }
 
-export interface SimpleStateOptions<T = any> {
-  /**
-   * Whether to deep clone mutable state when getting or notifying subscribers.
-   *
-   * Default: true (recommended for safety)
-   *
-   * Set to false for performance-critical scenarios where you can guarantee
-   * that state won't be mutated externally.
-   */
+export interface SimpleStateOptions<T = unknown> {
   clone?: boolean;
-
-  /**
-   * Suppress console warnings.
-   *
-   * Default: false
-   *
-   * Set to true to disable warnings (useful for benchmarks/tests).
-   */
   suppressWarnings?: boolean;
-
-  /**
-   * Custom equality function to determine if a value has changed.
-   *
-   * Default: reference equality (===)
-   *
-   * Set to false to always notify subscribers, or provide a function
-   * for custom comparison logic (e.g., deep equality).
-   */
-  equals?: false | ((prev: T, next: T) => boolean);
+  equalityFn?: (prev: T, next: T) => boolean;
+  alwaysNotify?: boolean;
 }
 
-export function newSimpleState<T>(initial: T, options?: SimpleStateOptions<T>): SimpleState<T> {
-  const _type = typeof initial;
-  const _mutableType = isMutable(initial) ? getMutableDataType(initial) : undefined;
-  const _shouldClone = options?.clone ?? true;
-  const _suppressWarnings = options?.suppressWarnings ?? false;
-  const _equals = options?.equals;
+export function newSimpleState<T>(
+  initial: T,
+  options?: SimpleStateOptions<T>,
+): SimpleState<T> {
+  const mutable = isMutable(initial) ? getMutableDataType(initial) : undefined;
+  const shouldClone = options?.clone ?? true;
+  const suppressWarnings = options?.suppressWarnings ?? false;
+  const equalityFn = options?.equalityFn ??
+    function defaultEqualityFn(a: T, b: T): boolean {
+      return a === b;
+    };
+  const alwaysNotify = options?.alwaysNotify ?? false;
 
-  if (_type === "function" && !_suppressWarnings) {
+  function hasSameType(value: unknown): boolean {
+    return typeof value === typeof initial;
+  }
+
+  if (typeof initial === "function" && !suppressWarnings) {
     console.warn(
-      'Warning: Functions cannot be cloned. Mutations to captured variables (closures) will affect the stored state. Consider storing data instead of functions.'
+      "Warning: Functions cannot be cloned. Mutations to captured variables (closures) will affect the stored state. Consider storing data instead of functions.",
     );
   }
 
-  if (!_shouldClone && isMutable(initial) && !_suppressWarnings) {
+  if (!shouldClone && mutable && !suppressWarnings) {
     console.warn(
-      'Warning: Cloning is disabled. Mutations to the state object will affect the stored state. Ensure you do not mutate state externally.'
+      "Warning: Cloning is disabled. Mutations to the state object will affect the stored state. Ensure you do not mutate state externally.",
     );
   }
 
-  let _state = initial;
+  let state = initial;
 
   function share(): T {
-    if (!_shouldClone || !isMutable(_state)) return _state;
-    if (_type === "function") return _state;
+    if (!shouldClone || !mutable) return state;
+    if (typeof initial === "function") return state;
 
     try {
-      return structuredClone(_state);
+      return structuredClone(state);
     } catch (error) {
       throw new Error(
-        `Unable to clone state: ${error instanceof Error ? error.message : String(error)}`
+        `Unable to clone state: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
       );
     }
   }
 
-  const _subscribers = new Map<number, (value: T) => void>();
-  let _nextId = 0;
-  let _dispatchScheduled = false;
+  const subscribers = new Map<number, (value: T) => void>();
+  let nextId = 0;
+  let dispatchScheduled = false;
 
   function dispatch() {
     // Subscribers are notified in insertion order (Map iteration order is guaranteed)
-    _subscribers.forEach(function notifySubscriber(callback) {
+    subscribers.forEach(function notifySubscriber(callback) {
       callback(share());
     });
   }
 
   function scheduleDispatch() {
-    if (!_dispatchScheduled) {
-      _dispatchScheduled = true;
+    if (!dispatchScheduled) {
+      dispatchScheduled = true;
       queueMicrotask(function executeDispatch() {
-        _dispatchScheduled = false;
+        dispatchScheduled = false;
         dispatch();
       });
     }
@@ -96,48 +84,47 @@ export function newSimpleState<T>(initial: T, options?: SimpleStateOptions<T>): 
       return share();
     },
     set: function set(input: T) {
-      if (typeof input !== _type) {
+      if (!hasSameType(input)) {
         throw new Error(
-          `Incompatible data type: Expected ${_type}, but received ${typeof input}. Check your input and try again.`
+          `Incompatible data type: Expected ${typeof initial}, but received ${typeof input}. Check your input and try again.`,
         );
       }
 
-      if (isMutable(input)) {
+      if (mutable) {
         const newMutableType = getMutableDataType(input);
-        if (newMutableType !== _mutableType) {
+        if (newMutableType !== mutable) {
           throw new Error(
-            `Incompatible mutable data type: Expected ${_mutableType ?? 'undefined'}, but received ${newMutableType ?? 'undefined'}. Check your input and try again.`
+            `Incompatible mutable data type: Expected ${
+              mutable ?? "undefined"
+            }, but received ${
+              newMutableType ?? "undefined"
+            }. Check your input and try again.`,
           );
         }
       }
 
-      // Determine if value has changed based on equals option
-      const hasChanged = _equals === false
-        ? true // Always notify if equals is false
-        : _equals
-          ? !_equals(_state, input) // Use custom equality function
-          : _state !== input; // Default reference equality
+      const hasChanged = alwaysNotify ? true : !equalityFn(state, input);
 
       if (hasChanged) {
-        _state = input;
+        state = input;
         scheduleDispatch();
       }
     },
     subscribe: function subscribe(callback: (value: T) => void) {
-      const id = _nextId++;
-      _subscribers.set(id, callback);
+      const id = nextId++;
+      subscribers.set(id, callback);
       return id;
     },
     unsubscribe: function unsubscribe(id: number) {
       if (typeof id !== "number") {
         throw new Error(
-          `Invalid input: Expected a number, but received ${typeof id}`
+          `Invalid input: Expected a number, but received ${typeof id}`,
         );
       }
-      if (!_subscribers.has(id)) {
+      if (!subscribers.has(id)) {
         throw new Error(`Invalid subscription ID: ${id}`);
       }
-      _subscribers.delete(id);
+      subscribers.delete(id);
     },
   };
 }
@@ -161,12 +148,12 @@ function isMutable(input: unknown): boolean {
 }
 
 function getMutableDataType(input: unknown): MutableType | undefined {
-  if (typeof input === "function") return MutableTypes.FUNCTION;
   if (Array.isArray(input)) return MutableTypes.ARRAY;
+  if (input instanceof Date) return MutableTypes.DATE;
   if (input instanceof Map) return MutableTypes.MAP;
   if (input instanceof Set) return MutableTypes.SET;
-  if (input instanceof Date) return MutableTypes.DATE;
   if (input instanceof RegExp) return MutableTypes.REGEX;
+  if (typeof input === "function") return MutableTypes.FUNCTION;
   if (typeof input === "object") return MutableTypes.OBJECT;
   return undefined;
 }

@@ -1,5 +1,4 @@
-import { bench, describe } from "vitest";
-import { newSimpleState } from "../src/index";
+import { newSimpleState } from "../src/index.ts";
 
 /**
  * Consolidated Benchmark Suite for Simple State
@@ -19,7 +18,7 @@ interface Row {
 function buildData(count: number): Row[] {
   return Array.from({ length: count }, (_, i) => ({
     id: i,
-    label: `Item ${i}`
+    label: `Item ${i}`,
   }));
 }
 
@@ -27,191 +26,266 @@ function buildData(count: number): Row[] {
 // 1. Basic Operations
 // =============================================================================
 
-describe("Basic Operations", () => {
-  bench("create state", () => {
+Deno.bench({
+  name: "create state",
+  group: "Basic Operations",
+  fn: () => {
     newSimpleState(0);
-  });
+  },
+});
 
-  bench("get primitive", () => {
+Deno.bench({
+  name: "get primitive",
+  group: "Basic Operations",
+  fn: () => {
     const state = newSimpleState(42);
     state.get();
-  });
+  },
+});
 
-  bench("set primitive", () => {
+Deno.bench({
+  name: "set primitive",
+  group: "Basic Operations",
+  fn: () => {
     const state = newSimpleState(0);
     state.set(1);
-  });
+  },
+});
 
-  bench("subscribe", () => {
+Deno.bench({
+  name: "subscribe",
+  group: "Basic Operations",
+  fn: () => {
     const state = newSimpleState(0);
     state.subscribe(() => {});
-  });
+  },
+});
 
-  bench("subscribe + unsubscribe", () => {
+Deno.bench({
+  name: "subscribe + unsubscribe",
+  group: "Basic Operations",
+  fn: () => {
     const state = newSimpleState(0);
     const id = state.subscribe(() => {});
     state.unsubscribe(id);
-  });
+  },
 });
 
 // =============================================================================
 // 2. Scaling Tests
 // =============================================================================
 
-describe("Scaling with Subscribers", () => {
-  bench("set with 1 subscriber", () => {
+Deno.bench({
+  name: "set with 1 subscriber",
+  group: "Scaling with Subscribers",
+  fn: () => {
     const state = newSimpleState(0);
     state.subscribe(() => {});
     state.set(1);
-  });
+  },
+});
 
-  bench("set with 10 subscribers", () => {
+Deno.bench({
+  name: "set with 10 subscribers",
+  group: "Scaling with Subscribers",
+  fn: () => {
     const state = newSimpleState(0);
     for (let i = 0; i < 10; i++) {
       state.subscribe(() => {});
     }
     state.set(1);
-  });
+  },
+});
 
-  bench("set with 100 subscribers", () => {
+Deno.bench({
+  name: "set with 100 subscribers",
+  group: "Scaling with Subscribers",
+  fn: () => {
     const state = newSimpleState(0);
     for (let i = 0; i < 100; i++) {
       state.subscribe(() => {});
     }
     state.set(1);
-  });
+  },
 });
 
 // =============================================================================
 // 3. Clone Performance
 // =============================================================================
 
-describe("Clone Impact: Small Object", () => {
-  const obj = { a: 1, b: 2, c: 3 };
-
-  bench("get (with clone)", () => {
+Deno.bench({
+  name: "get (with clone)",
+  group: "Clone Impact: Small Object",
+  fn: () => {
+    const obj = { a: 1, b: 2, c: 3 };
     const state = newSimpleState(obj);
     state.get();
-  });
+  },
+});
 
-  bench("get (no clone)", () => {
+Deno.bench({
+  name: "get (no clone)",
+  group: "Clone Impact: Small Object",
+  fn: () => {
+    const obj = { a: 1, b: 2, c: 3 };
     const state = newSimpleState(obj, { clone: false, suppressWarnings: true });
     state.get();
-  });
+  },
 });
 
-describe("Clone Impact: 100-item Array", () => {
-  const arr = buildData(100);
-
-  bench("get (with clone)", () => {
+Deno.bench({
+  name: "get (with clone)",
+  group: "Clone Impact: 100-item Array",
+  fn: () => {
+    const arr = buildData(100);
     const state = newSimpleState(arr);
     state.get();
-  });
-
-  bench("get (no clone)", () => {
-    const state = newSimpleState(arr, { clone: false, suppressWarnings: true });
-    state.get();
-  });
+  },
 });
 
-describe("Clone Impact: 1000-item Array", () => {
-  const arr = buildData(1000);
-
-  bench("get (with clone)", () => {
-    const state = newSimpleState(arr);
-    state.get();
-  });
-
-  bench("get (no clone)", () => {
+Deno.bench({
+  name: "get (no clone)",
+  group: "Clone Impact: 100-item Array",
+  fn: () => {
+    const arr = buildData(100);
     const state = newSimpleState(arr, { clone: false, suppressWarnings: true });
     state.get();
-  });
+  },
+});
+
+Deno.bench({
+  name: "get (with clone)",
+  group: "Clone Impact: 1000-item Array",
+  fn: () => {
+    const arr = buildData(1000);
+    const state = newSimpleState(arr);
+    state.get();
+  },
+});
+
+Deno.bench({
+  name: "get (no clone)",
+  group: "Clone Impact: 1000-item Array",
+  fn: () => {
+    const arr = buildData(1000);
+    const state = newSimpleState(arr, { clone: false, suppressWarnings: true });
+    state.get();
+  },
 });
 
 // =============================================================================
 // 4. Real-world Scenarios
 // =============================================================================
 
-describe("Real-world: Counter", () => {
-  bench("increment with subscriber", () => {
+Deno.bench({
+  name: "increment with subscriber",
+  group: "Real-world: Counter",
+  fn: () => {
     const state = newSimpleState(0);
     state.subscribe(() => {});
     state.set(state.get() + 1);
-  });
+  },
 });
 
-describe("Real-world: Todo List (100 items)", () => {
-  const todos = buildData(100);
-
-  bench("add item", () => {
+Deno.bench({
+  name: "add item",
+  group: "Real-world: Todo List (100 items)",
+  fn: () => {
+    const todos = buildData(100);
     const state = newSimpleState(todos);
     state.set([...state.get(), { id: 101, label: "New" }]);
-  });
+  },
+});
 
-  bench("update item", () => {
+Deno.bench({
+  name: "update item",
+  group: "Real-world: Todo List (100 items)",
+  fn: () => {
+    const todos = buildData(100);
     const state = newSimpleState(todos);
     const current = state.get();
     state.set(
       current.map((todo, i) =>
         i === 50 ? { ...todo, label: "Updated" } : todo
-      )
+      ),
     );
-  });
-
-  bench("remove item", () => {
-    const state = newSimpleState(todos);
-    state.set(state.get().filter((_, i) => i !== 50));
-  });
+  },
 });
 
-describe("Real-world: Form State", () => {
-  bench("update single field", () => {
+Deno.bench({
+  name: "remove item",
+  group: "Real-world: Todo List (100 items)",
+  fn: () => {
+    const todos = buildData(100);
+    const state = newSimpleState(todos);
+    state.set(state.get().filter((_, i) => i !== 50));
+  },
+});
+
+Deno.bench({
+  name: "update single field",
+  group: "Real-world: Form State",
+  fn: () => {
     const state = newSimpleState({
       username: "",
       email: "",
-      password: ""
+      password: "",
     });
     state.set({ ...state.get(), username: "alice" });
-  });
+  },
 });
 
-describe("Real-world: Batch Updates", () => {
-  bench("10 rapid updates (auto-batched)", () => {
+Deno.bench({
+  name: "10 rapid updates (auto-batched)",
+  group: "Real-world: Batch Updates",
+  fn: () => {
     const state = newSimpleState(0);
     for (let i = 0; i < 10; i++) {
       state.set(i);
     }
-  });
+  },
 });
 
 // =============================================================================
 // 5. Framework Comparison (js-framework-benchmark style)
 // =============================================================================
 
-describe("Framework Benchmark: Create Rows", () => {
-  bench("create 1,000 rows", () => {
+Deno.bench({
+  name: "create 1,000 rows",
+  group: "Framework Benchmark: Create Rows",
+  fn: () => {
     const state = newSimpleState<Row[]>([]);
     state.set(buildData(1000));
-  });
-
-  bench("create 10,000 rows", () => {
-    const state = newSimpleState<Row[]>([]);
-    state.set(buildData(10000));
-  });
+  },
 });
 
-describe("Framework Benchmark: Update Rows", () => {
-  bench("update every 10th row (1,000 rows)", () => {
+Deno.bench({
+  name: "create 10,000 rows",
+  group: "Framework Benchmark: Create Rows",
+  fn: () => {
+    const state = newSimpleState<Row[]>([]);
+    state.set(buildData(10000));
+  },
+});
+
+Deno.bench({
+  name: "update every 10th row (1,000 rows)",
+  group: "Framework Benchmark: Update Rows",
+  fn: () => {
     const state = newSimpleState<Row[]>(buildData(1000));
     const data = state.get();
     state.set(
       data.map((row, index) =>
         index % 10 === 0 ? { ...row, label: row.label + " !!!" } : row
-      )
+      ),
     );
-  });
+  },
+});
 
-  bench("swap 2 rows (1,000 rows)", () => {
+Deno.bench({
+  name: "swap 2 rows (1,000 rows)",
+  group: "Framework Benchmark: Update Rows",
+  fn: () => {
     const state = newSimpleState<Row[]>(buildData(1000));
     const data = state.get();
     if (data.length > 998) {
@@ -221,17 +295,23 @@ describe("Framework Benchmark: Update Rows", () => {
       newData[998] = temp;
       state.set(newData);
     }
-  });
+  },
 });
 
-describe("Framework Benchmark: Clear Rows", () => {
-  bench("clear 1,000 rows", () => {
+Deno.bench({
+  name: "clear 1,000 rows",
+  group: "Framework Benchmark: Clear Rows",
+  fn: () => {
     const state = newSimpleState<Row[]>(buildData(1000));
     state.set([]);
-  });
+  },
+});
 
-  bench("clear 10,000 rows", () => {
+Deno.bench({
+  name: "clear 10,000 rows",
+  group: "Framework Benchmark: Clear Rows",
+  fn: () => {
     const state = newSimpleState<Row[]>(buildData(10000));
     state.set([]);
-  });
+  },
 });

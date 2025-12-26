@@ -1,28 +1,32 @@
-import { defineConfig } from "vite";
-import { resolve } from "path";
 import dts from "vite-plugin-dts";
+import path from "node:path";
+import process from "node:process";
+import { defineConfig } from "vite";
+import { fileURLToPath } from "node:url";
+
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
+
+const isMinified = !process.env.BUILD_UNMINIFIED;
 
 export default defineConfig({
   root: process.env.VITE_ROOT || ".",
   build: {
     lib: {
-      entry: resolve(__dirname, "src/index.ts"),
+      entry: path.resolve(__dirname, "src/index.ts"),
       name: "SimpleState",
-      fileName: "index",
-      formats: ["es"],
+      fileName: (format) => {
+        const suffix = isMinified ? ".min.js" : ".js";
+        if (format === "es") return `simple-state.esm${suffix}`;
+        if (format === "iife") return `simple-state.iife${suffix}`;
+        if (format === "umd") return `simple-state.umd${suffix}`;
+        return `simple-state${suffix}`;
+      },
+      formats: ["es", "iife", "umd"],
     },
+    minify: isMinified ? "esbuild" : false,
     rollupOptions: {
       external: [],
     },
   },
   plugins: [dts({ include: ["src/index.ts"] })],
-  test: {
-    globals: true,
-    environment: "node",
-    coverage: {
-      provider: "v8",
-      reporter: ["text", "json", "html"],
-      exclude: ["node_modules/", "dist/", "**/*.test.ts"],
-    },
-  },
 });

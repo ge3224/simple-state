@@ -14,32 +14,73 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      - uses: denoland/setup-deno@v2
         with:
-          version: 9.0.0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install
+          deno-version: v2.x
 
       - name: Run tests
-        run: pnpm test
+        run: deno task test
 
       - name: Run type check
-        run: pnpm type-check
+        run: deno task typecheck
 
-      - name: Build
-        run: pnpm build
+      - name: Build minified versions
+        run: deno task build
 
-      - name: Create tarball
-        run: tar -czf simple-state-dist.tar.gz dist/
+      - name: Copy minified files
+        run: |
+          mkdir -p release
+          cp dist/simple-state.esm.min.js release/
+          cp dist/simple-state.iife.min.js release/
+          cp dist/simple-state.umd.min.js release/
+
+      - name: Build non-minified versions
+        run: BUILD_UNMINIFIED=true deno task build
+
+      - name: Copy non-minified files and TypeScript source
+        run: |
+          cp dist/simple-state.esm.js release/
+          cp dist/simple-state.iife.js release/
+          cp dist/simple-state.umd.js release/
+          cp src/index.ts release/simple-state.ts
+
+      - name: Create release artifacts
+        run: |
+          # Create tarball of all dist files
+          tar -czf simple-state-dist.tar.gz dist/
+
+          # Generate checksums for bundle files
+          cd release
+          sha256sum simple-state.esm.min.js > simple-state.esm.min.js.sha256
+          sha256sum simple-state.esm.js > simple-state.esm.js.sha256
+          sha256sum simple-state.iife.min.js > simple-state.iife.min.js.sha256
+          sha256sum simple-state.iife.js > simple-state.iife.js.sha256
+          sha256sum simple-state.umd.min.js > simple-state.umd.min.js.sha256
+          sha256sum simple-state.umd.js > simple-state.umd.js.sha256
+          sha256sum simple-state.ts > simple-state.ts.sha256
+          cd ..
+
+          # Create checksum for tarball
+          sha256sum simple-state-dist.tar.gz > simple-state-dist.tar.gz.sha256
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: simple-state-dist.tar.gz
+          files: |
+            simple-state-dist.tar.gz
+            simple-state-dist.tar.gz.sha256
+            release/simple-state.ts
+            release/simple-state.ts.sha256
+            release/simple-state.esm.min.js
+            release/simple-state.esm.min.js.sha256
+            release/simple-state.esm.js
+            release/simple-state.esm.js.sha256
+            release/simple-state.iife.min.js
+            release/simple-state.iife.min.js.sha256
+            release/simple-state.iife.js
+            release/simple-state.iife.js.sha256
+            release/simple-state.umd.min.js
+            release/simple-state.umd.min.js.sha256
+            release/simple-state.umd.js
+            release/simple-state.umd.js.sha256
           generate_release_notes: true
